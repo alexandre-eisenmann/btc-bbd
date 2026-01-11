@@ -1,0 +1,91 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d0d0d"/>
+      <stop offset="100%" style="stop-color:#141414"/>
+    </linearGradient>
+    <linearGradient id="chartLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6b8db8"/>
+      <stop offset="100%" style="stop-color:#8ba8d0"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle grid pattern -->
+  <g stroke="#ffffff" stroke-opacity="0.03" stroke-width="1">
+    <line x1="100" y1="100" x2="100" y2="530"/>
+    <line x1="300" y1="100" x2="300" y2="530"/>
+    <line x1="500" y1="100" x2="500" y2="530"/>
+    <line x1="700" y1="100" x2="700" y2="530"/>
+    <line x1="900" y1="100" x2="900" y2="530"/>
+    <line x1="1100" y1="100" x2="1100" y2="530"/>
+    <line x1="100" y1="150" x2="1100" y2="150"/>
+    <line x1="100" y1="250" x2="1100" y2="250"/>
+    <line x1="100" y1="350" x2="1100" y2="350"/>
+    <line x1="100" y1="450" x2="1100" y2="450"/>
+  </g>
+  
+  <!-- Warning zone (70-80%) -->
+  <rect x="100" y="150" width="1000" height="100" fill="#c9a048" fill-opacity="0.08"/>
+  
+  <!-- Danger zone (80%+) -->
+  <rect x="100" y="100" width="1000" height="50" fill="#b85450" fill-opacity="0.08"/>
+  
+  <!-- Reference lines -->
+  <line x1="100" y1="200" x2="1100" y2="200" stroke="#c9a048" stroke-width="1" stroke-dasharray="6 4" stroke-opacity="0.4"/>
+  <line x1="100" y1="150" x2="1100" y2="150" stroke="#b85450" stroke-width="1" stroke-dasharray="6 4" stroke-opacity="0.4"/>
+  
+  <!-- LVR Chart Line - simulating a typical scenario -->
+  <path d="M100 450 
+           C150 445, 200 440, 250 430
+           C300 420, 350 400, 400 380
+           C450 350, 500 320, 550 340
+           C600 380, 650 350, 700 310
+           C750 280, 800 250, 850 230
+           C900 260, 950 290, 1000 270
+           C1050 250, 1080 240, 1100 235" 
+        stroke="url(#chartLine)" 
+        stroke-width="3" 
+        fill="none" 
+        filter="url(#glow)"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+  
+  <!-- Chart border -->
+  <rect x="100" y="100" width="1000" height="430" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1" fill="none" rx="4"/>
+  
+  <!-- Title -->
+  <text x="600" y="60" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="600" fill="#f5f5f5" letter-spacing="-0.02em">
+    Buy-Borrow-Die
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="590" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#666666" font-weight="300">
+    Bitcoin Loan-to-Value Ratio Simulator
+  </text>
+  
+  <!-- Y-axis labels -->
+  <text x="85" y="155" text-anchor="end" font-family="monospace" font-size="12" fill="#666666">80%</text>
+  <text x="85" y="205" text-anchor="end" font-family="monospace" font-size="12" fill="#666666">70%</text>
+  <text x="85" y="355" text-anchor="end" font-family="monospace" font-size="12" fill="#666666">40%</text>
+  <text x="85" y="455" text-anchor="end" font-family="monospace" font-size="12" fill="#666666">20%</text>
+  
+  <!-- Legend -->
+  <rect x="920" y="115" width="12" height="12" fill="#c9a048" fill-opacity="0.3" rx="2"/>
+  <text x="938" y="125" font-family="system-ui, sans-serif" font-size="11" fill="#888888">Warning</text>
+  
+  <rect x="1000" y="115" width="12" height="12" fill="#b85450" fill-opacity="0.3" rx="2"/>
+  <text x="1018" y="125" font-family="system-ui, sans-serif" font-size="11" fill="#888888">Liquidation</text>
+  
+  <!-- LVR label on chart -->
+  <text x="1110" y="240" font-family="monospace" font-size="14" fill="#6b8db8" font-weight="500">LVR</text>
+</svg>
