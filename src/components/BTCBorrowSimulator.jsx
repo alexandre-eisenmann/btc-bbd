@@ -1050,6 +1050,7 @@ const InputField = ({ label, value, onChange, prefix, suffix, ...props }) => (
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
+        onFocus={(e) => e.target.select()}
         className="w-full px-3 py-2.5 text-sm rounded font-mono transition-all"
         style={{ 
           background: 'var(--bg-secondary)', 
