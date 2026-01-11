@@ -182,6 +182,21 @@ const BTCBorrowSimulator = () => {
   }, [monthlyData, btcPriceUSD, horizonYears, MONTHS]);
 
   const randomizeScenario = () => setRandomSeed(Math.floor(Math.random() * 10000));
+  
+  const resultsRef = React.useRef(null);
+  const parametersRef = React.useRef(null);
+  
+  const runSimulation = () => {
+    randomizeScenario();
+    // Scroll to results after a brief delay to let the state update
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+  
+  const scrollToParameters = () => {
+    parametersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Tooltip styles
   const tooltipStyle = {
@@ -198,7 +213,7 @@ const BTCBorrowSimulator = () => {
         
         {/* Header */}
         <header className="mb-20">
-          <h1 className="text-4xl font-semibold tracking-tight mb-6" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+          <h1 className="text-4xl font-semibold tracking-tight mb-6 text-center" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             Buy-Borrow-Die
           </h1>
           
@@ -209,6 +224,35 @@ const BTCBorrowSimulator = () => {
               you borrow against them to fund your lifestyle. The loan proceeds aren't taxable income. 
               When you die, your heirs receive a stepped-up cost basis, potentially eliminating the deferred gains entirely.
             </p>
+            
+            {/* Primary CTA - visible immediately */}
+            <div className="py-6 flex flex-col items-center">
+              <button
+                onClick={runSimulation}
+                className="group px-6 py-3 text-sm font-medium rounded-lg transition-all flex items-center gap-3"
+                style={{
+                  background: 'var(--accent)',
+                  color: 'var(--bg-primary)',
+                }}
+              >
+                <span>Run Simulation</span>
+                <svg 
+                  className="w-4 h-4 transition-transform group-hover:translate-x-1" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+              <button
+                onClick={scrollToParameters}
+                className="text-xs mt-3 transition-all hover:opacity-80"
+                style={{ color: 'var(--text-tertiary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+              >
+                Change parameters
+              </button>
+            </div>
             
             <p className="leading-relaxed" style={{ fontWeight: 300 }}>
               This simulator models the strategy applied to Bitcoin. You hold BTC, borrow against it at a given 
@@ -226,11 +270,15 @@ const BTCBorrowSimulator = () => {
           </div>
         </header>
 
-        {/* Model Parameters */}
-        <section className="mb-12">
-          <h2 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            Price Model
+        {/* Parameters Section */}
+        <section ref={parametersRef} className="mb-16 scroll-mt-8">
+          <h2 className="text-2xl font-semibold tracking-tight mb-8" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+            Parameters
           </h2>
+          
+          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+            Price Model
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <InputField
               label="BTC Price"
@@ -277,25 +325,22 @@ const BTCBorrowSimulator = () => {
               min={0.1} max={5} step={0.1}
             />
           </div>
-        </section>
 
-        {/* Derived Parameters */}
-        <section className="mb-12 p-5 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            <DerivedValue label="Exponent (k)" value={formatNumber(priceModel.k, 4)} />
-            <DerivedValue label="Scale (A)" value={formatNumber(priceModel.A, 2)} />
-            <DerivedValue label={`Target Yr ${horizonYears}`} value={formatCurrency(TARGET_FINAL_PRICE)} highlight />
-            <DerivedValue label="μ(t₀) Growth" value={formatPercent(priceModel.k / t0Years * 100)} />
-            <DerivedValue label="σ_Y Stationary" value={formatPercent(priceModel.stationaryStd * 100)} />
-            <DerivedValue label="Typical Draw" value={`~${formatPercent((1 - Math.exp(-2 * priceModel.stationaryStd)) * 100)}`} />
+          {/* Derived Parameters */}
+          <div className="my-8 p-5 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              <DerivedValue label="Exponent (k)" value={formatNumber(priceModel.k, 4)} />
+              <DerivedValue label="Scale (A)" value={formatNumber(priceModel.A, 2)} />
+              <DerivedValue label={`Target Yr ${horizonYears}`} value={formatCurrency(TARGET_FINAL_PRICE)} highlight />
+              <DerivedValue label="μ(t₀) Growth" value={formatPercent(priceModel.k / t0Years * 100)} />
+              <DerivedValue label="σ_Y Stationary" value={formatPercent(priceModel.stationaryStd * 100)} />
+              <DerivedValue label="Typical Draw" value={`~${formatPercent((1 - Math.exp(-2 * priceModel.stationaryStd)) * 100)}`} />
+            </div>
           </div>
-        </section>
 
-        {/* Loan Parameters */}
-        <section className="mb-12">
-          <h2 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
             Loan Parameters
-          </h2>
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <InputField label="BTC Holdings" value={initialBTC} onChange={setInitialBTC} suffix="₿" min={0.1} max={100} step={0.1} />
             <InputField label="Initial LVR" value={initialLVR} onChange={setInitialLVR} suffix="%" min={1} max={40} step={1} />
@@ -303,10 +348,9 @@ const BTCBorrowSimulator = () => {
             <InputField label="Interest Rate" value={annualInterest} onChange={setAnnualInterest} suffix="%" min={0} max={25} step={0.5} />
             <InputField label="Orig. Fee" value={originationFee} onChange={setOriginationFee} suffix="%" min={0} max={5} step={0.1} />
           </div>
-        </section>
-
-        {/* Action */}
-        <section className="mb-8 flex flex-col items-center gap-2">
+          
+          {/* Action */}
+          <div className="mt-10 flex flex-col items-center gap-2">
           <button
             onClick={randomizeScenario}
             disabled={annualVolatility === 0}
@@ -318,15 +362,16 @@ const BTCBorrowSimulator = () => {
               opacity: annualVolatility === 0 ? 0.5 : 1
             }}
           >
-            Randomize Scenario
+            Run Simulation
           </button>
           <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
             {annualVolatility === 0 ? 'Set σ > 0 for stochastic mode' : `Seed: ${randomSeed}`}
           </span>
+          </div>
         </section>
 
         {/* Narrative Summary */}
-        <section className="mb-12">
+        <section ref={resultsRef} className="mb-12 scroll-mt-8">
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
               You start with <span style={{ color: 'var(--text-primary)' }}>{initialBTC} BTC</span> worth{' '}
@@ -378,6 +423,14 @@ const BTCBorrowSimulator = () => {
               funded by {formatCurrency(monthlyData[MONTHS - 1]?.totalDrawn || INITIAL_DRAW)} in loans 
               ({formatCurrency(monthlyData[MONTHS - 1]?.totalFees || INITIAL_FEE)} in fees).
             </p>
+            
+            <button
+              onClick={scrollToParameters}
+              className="mt-6 text-sm transition-all hover:opacity-80"
+              style={{ color: 'var(--accent)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
+              ↑ Adjust parameters and run again
+            </button>
           </div>
         </section>
 
