@@ -37,7 +37,7 @@ const BTCBorrowSimulator = () => {
   
   // Loan Parameters
   const [initialLVR, setInitialLVR] = useState(20);
-  const [monthlySpend, setMonthlySpend] = useState(2000);
+  const [monthlySpend, setMonthlySpend] = useState(1000);
   const [annualInterest, setAnnualInterest] = useState(9.5);
   const [originationFee, setOriginationFee] = useState(2.0);
   const [randomSeed, setRandomSeed] = useState(0);
