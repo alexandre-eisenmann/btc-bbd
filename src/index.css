@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Core palette - sophisticated dark */
+  --bg-primary: #0c0c0c;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1a1a1a;
+  --bg-elevated: #202020;
+  
+  /* Text hierarchy */
+  --text-primary: #f0f0f0;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #666666;
+  
+  /* Accent - warm brass/gold */
+  --accent: #c9a962;
+  --accent-muted: #9a7b3c;
+  --accent-subtle: rgba(201, 169, 98, 0.1);
+  
+  /* Status colors - muted */
+  --success: #5a9a6e;
+  --warning: #c9a048;
+  --danger: #b85450;
+  --info: #6b8db8;
+  
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-muted: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Monospace for numbers/data */
+.font-mono {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Subtle scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Custom focus styles */
+input:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+}
+
+/* Table row hover */
+tbody tr {
+  transition: background 0.15s ease;
+}
+
+/* Subtle animations */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Chart tooltip override */
+.recharts-tooltip-wrapper {
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+}
