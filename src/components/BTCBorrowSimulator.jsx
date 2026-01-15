@@ -217,227 +217,234 @@ const BTCBorrowSimulator = () => {
 
   // Tooltip styles
   const tooltipStyle = {
-    backgroundColor: '#1a1a1a',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '6px',
+    backgroundColor: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-default)',
+    borderRadius: '8px',
     fontSize: '12px',
-    fontFamily: "'JetBrains Mono', monospace"
+    fontFamily: "'JetBrains Mono', monospace",
+    padding: '8px 12px'
   };
 
   return (
     <div className="w-full min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      <div className="max-w-7xl mx-auto px-8 py-16 lg:px-12">
-        
-        {/* Header */}
-        <header className="mb-24">
-          <h1 className="text-5xl font-semibold tracking-tight mb-10 text-center" style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
-            Buy-Borrow-Die
-          </h1>
-
-          <div className="space-y-6" style={{ color: 'var(--text-secondary)' }}>
-            <p className="text-xl leading-relaxed" style={{ fontWeight: 300, letterSpacing: '-0.01em' }}>
-              The <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>buy-borrow-die</span> strategy
-              is a wealth preservation technique: instead of selling appreciated assets and triggering capital gains taxes,
-              you borrow against them to fund your lifestyle. The loan proceeds aren't taxable income.
-              When you die, your heirs receive a stepped-up cost basis, potentially eliminating the deferred gains entirely.
-            </p>
-
-            {/* Primary CTA - visible immediately */}
-            <div className="py-8 flex flex-col items-center">
-              <SimulationButton
-                onClick={runSimulation}
-                buttonState={buttonState}
-                disabled={annualVolatility === 0}
-                primary
-              />
-              <button
-                onClick={scrollToParameters}
-                className="text-sm mt-4 transition-all hover:opacity-80"
-                style={{ color: 'var(--text-tertiary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-              >
-                Change parameters
-              </button>
+      {/* Top Header Bar */}
+      <header className="sticky top-0 z-50 px-6 py-4" style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-default)' }}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>
+              <span className="text-lg font-bold" style={{ color: 'var(--bg-primary)' }}>₿</span>
             </div>
-
-            <div className="grid md:grid-cols-2 gap-8 pt-4">
-              <p className="leading-relaxed text-base" style={{ fontWeight: 300 }}>
-                This simulator models the strategy applied to Bitcoin. You hold BTC, borrow against it at a given
-                loan-to-value ratio, and spend the proceeds over time. As Bitcoin's price evolves, so does your
-                LVR — the critical metric that determines whether you face margin calls or liquidation.
-              </p>
-
-              <p className="leading-relaxed text-base" style={{ fontWeight: 300 }}>
-                The price model uses a <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>power-law trend</span> with{' '}
-                <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>mean-reverting stochastic volatility</span>.
-                This captures Bitcoin's historical pattern: long-term growth following a decaying power-law,
-                with substantial but bounded deviations that always revert toward the trend.
-              </p>
+            <div>
+              <h1 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Buy-Borrow-Die
+              </h1>
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>BTC Loan Strategy Simulator</p>
             </div>
           </div>
-        </header>
+          <SimulationButton
+            onClick={runSimulation}
+            buttonState={buttonState}
+            disabled={annualVolatility === 0}
+            compact
+          />
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Key Metrics Cards */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MetricCard
+            label="BTC Price"
+            value={formatCurrency(btcPriceUSD)}
+            color="var(--accent)"
+          />
+          <MetricCard
+            label="Portfolio Value"
+            value={formatCurrency(monthlyData[MONTHS - 1]?.btcValue || INITIAL_BTC_VALUE)}
+            color="var(--accent)"
+          />
+          <MetricCard
+            label="Total Loan"
+            value={formatCurrency(monthlyData[MONTHS - 1]?.loanBalance || INITIAL_LOAN)}
+            color="var(--danger)"
+          />
+          <MetricCard
+            label="Final LVR"
+            value={formatPercent(monthlyData[MONTHS - 1]?.lvr || 0)}
+            color={riskMetrics.peakLVR >= 80 ? 'var(--danger)' : riskMetrics.peakLVR >= 70 ? 'var(--warning)' : 'var(--success)'}
+          />
+        </section>
+
+        {/* Introduction Card */}
+        <section className="mb-8 p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            The <span style={{ color: 'var(--accent)', fontWeight: 500 }}>buy-borrow-die</span> strategy
+            is a wealth preservation technique: instead of selling appreciated assets and triggering capital gains taxes,
+            you borrow against them to fund your lifestyle. This simulator models the strategy applied to Bitcoin using a
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}> power-law trend</span> with
+            <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}> mean-reverting stochastic volatility</span>.
+          </p>
+        </section>
 
         {/* Parameters Section */}
-        <section ref={parametersRef} className="mb-20 scroll-mt-8">
-          <h2 className="text-3xl font-semibold tracking-tight mb-10" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-            Parameters
-          </h2>
-          
-          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            Price Model
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-            <InputField
-              label="BTC Price"
-              value={btcPriceUSD}
-              onChange={setBtcPriceUSD}
-              prefix="$"
-              min={1000} max={1000000} step={1000}
-            />
-            <div className="flex flex-col">
-              <label className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>Time (t₀)</label>
-              <div className="px-3 py-3 font-mono text-sm rounded-lg" style={{
-                background: 'var(--bg-secondary)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-subtle)'
-              }}>
-                {t0Years.toFixed(2)}y
+        <section ref={parametersRef} className="mb-8 scroll-mt-20">
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+            <div className="flex items-center gap-2 mb-6">
+              <svg className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Simulation Parameters
+              </h2>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-xs font-medium uppercase tracking-wider mb-4" style={{ color: 'var(--text-tertiary)' }}>
+                Price Model
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <InputField
+                  label="BTC Price"
+                  value={btcPriceUSD}
+                  onChange={setBtcPriceUSD}
+                  prefix="$"
+                  min={1000} max={1000000} step={1000}
+                />
+                <div className="flex flex-col">
+                  <label className="text-xs mb-2 font-medium" style={{ color: 'var(--text-tertiary)' }}>Time (t₀)</label>
+                  <div className="px-3 py-2.5 font-mono text-sm rounded-lg" style={{
+                    background: 'var(--bg-tertiary)',
+                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-default)'
+                  }}>
+                    {t0Years.toFixed(2)}y
+                  </div>
+                </div>
+                <InputField label="Horizon" value={horizonYears} onChange={setHorizonYears} suffix="years" min={1} max={30} step={1} />
+                <InputField label="Forward CAGR" value={forwardCAGR} onChange={setForwardCAGR} suffix="%" min={-20} max={100} step={5} />
+                <InputField label="Volatility (σ)" value={annualVolatility} onChange={setAnnualVolatility} suffix="%" min={0} max={200} step={5} />
+                <InputField label="Mean Rev. (θ)" value={meanReversionSpeed} onChange={setMeanReversionSpeed} min={0.1} max={5} step={0.1} />
               </div>
             </div>
-            <InputField
-              label="Horizon"
-              value={horizonYears}
-              onChange={setHorizonYears}
-              suffix="years"
-              min={1} max={30} step={1}
-            />
-            <InputField
-              label="Forward CAGR"
-              value={forwardCAGR}
-              onChange={setForwardCAGR}
-              suffix="%"
-              min={-20} max={100} step={5}
-            />
-            <InputField
-              label="Volatility (σ)"
-              value={annualVolatility}
-              onChange={setAnnualVolatility}
-              suffix="%"
-              min={0} max={200} step={5}
-            />
-            <InputField
-              label="Mean Rev. (θ)"
-              value={meanReversionSpeed}
-              onChange={setMeanReversionSpeed}
-              min={0.1} max={5} step={0.1}
-            />
-          </div>
 
-          {/* Derived Parameters */}
-          <div className="my-10 p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-              <DerivedValue label="Exponent (k)" value={formatNumber(priceModel.k, 4)} />
-              <DerivedValue label="Scale (A)" value={formatNumber(priceModel.A, 2)} />
-              <DerivedValue label={`Target Yr ${horizonYears}`} value={formatCurrency(TARGET_FINAL_PRICE)} highlight />
-              <DerivedValue label="μ(t₀) Growth" value={formatPercent(priceModel.k / t0Years * 100)} />
-              <DerivedValue label="σ_Y Stationary" value={formatPercent(priceModel.stationaryStd * 100)} />
-              <DerivedValue label="Typical Draw" value={`~${formatPercent((1 - Math.exp(-2 * priceModel.stationaryStd)) * 100)}`} />
+            {/* Derived Parameters */}
+            <div className="mb-6 p-4 rounded-lg" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-muted)' }}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <DerivedValue label="Exponent (k)" value={formatNumber(priceModel.k, 4)} />
+                <DerivedValue label="Scale (A)" value={formatNumber(priceModel.A, 2)} />
+                <DerivedValue label={`Target Yr ${horizonYears}`} value={formatCurrency(TARGET_FINAL_PRICE)} highlight />
+                <DerivedValue label="μ(t₀) Growth" value={formatPercent(priceModel.k / t0Years * 100)} />
+                <DerivedValue label="σ_Y Stationary" value={formatPercent(priceModel.stationaryStd * 100)} />
+                <DerivedValue label="Typical Draw" value={`~${formatPercent((1 - Math.exp(-2 * priceModel.stationaryStd)) * 100)}`} />
+              </div>
             </div>
-          </div>
 
-          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            Loan Parameters
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
-            <InputField label="BTC Holdings" value={initialBTC} onChange={setInitialBTC} suffix="₿" min={0.1} max={100} step={0.1} />
-            <InputField label="Initial LVR" value={initialLVR} onChange={setInitialLVR} suffix="%" min={1} max={40} step={1} />
-            <InputField label="Monthly Spend" value={monthlySpend} onChange={setMonthlySpend} prefix="$" min={500} max={50000} step={500} />
-            <InputField label="Interest Rate" value={annualInterest} onChange={setAnnualInterest} suffix="%" min={0} max={25} step={0.5} />
-            <InputField label="Orig. Fee" value={originationFee} onChange={setOriginationFee} suffix="%" min={0} max={5} step={0.1} />
-          </div>
-          
-          {/* Action */}
-          <div className="mt-12 flex flex-col items-center gap-3">
-            <SimulationButton
-              onClick={randomizeScenario}
-              buttonState={buttonState}
-              disabled={annualVolatility === 0}
-            />
-            <span className="text-sm font-mono" style={{ color: 'var(--text-tertiary)' }}>
-              {annualVolatility === 0 ? 'Set σ > 0 for stochastic mode' : `Seed: ${randomSeed}`}
-            </span>
+            <div className="mb-6">
+              <h3 className="text-xs font-medium uppercase tracking-wider mb-4" style={{ color: 'var(--text-tertiary)' }}>
+                Loan Parameters
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <InputField label="BTC Holdings" value={initialBTC} onChange={setInitialBTC} suffix="₿" min={0.1} max={100} step={0.1} />
+                <InputField label="Initial LVR" value={initialLVR} onChange={setInitialLVR} suffix="%" min={1} max={40} step={1} />
+                <InputField label="Monthly Spend" value={monthlySpend} onChange={setMonthlySpend} prefix="$" min={500} max={50000} step={500} />
+                <InputField label="Interest Rate" value={annualInterest} onChange={setAnnualInterest} suffix="%" min={0} max={25} step={0.5} />
+                <InputField label="Orig. Fee" value={originationFee} onChange={setOriginationFee} suffix="%" min={0} max={5} step={0.1} />
+              </div>
+            </div>
+
+            {/* Action */}
+            <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border-default)' }}>
+              <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+                {annualVolatility === 0 ? 'Set σ > 0 for stochastic mode' : `Seed: ${randomSeed}`}
+              </span>
+              <SimulationButton
+                onClick={randomizeScenario}
+                buttonState={buttonState}
+                disabled={annualVolatility === 0}
+              />
+            </div>
           </div>
         </section>
 
-        {/* Narrative Summary */}
-        <section ref={resultsRef} className="mb-16 scroll-mt-8">
-          <div className="max-w-5xl mx-auto text-center">
-            <p className="text-xl leading-relaxed" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
-              You start with <span style={{ color: 'var(--text-primary)' }}>{initialBTC} BTC</span> worth{' '}
-              <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(INITIAL_BTC_VALUE)}</span> at today's price.{' '}
-              You borrow <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(INITIAL_DRAW)}</span> against it 
-              ({initialLVR}% LVR), paying a {originationFee}% origination fee.{' '}
-              You spend <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(monthlySpend)}/month</span>,{' '}
-              drawing additional loans annually as needed at {annualInterest}% interest.
-            </p>
-            
-            <p className="text-xl leading-relaxed mt-6" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
-              Over <span style={{ color: 'var(--text-primary)' }}>{horizonYears} years</span>, 
-              {annualVolatility > 0 ? (
-                <> if Bitcoin follows this random path with {forwardCAGR}% expected CAGR and {annualVolatility}% volatility,</>
-              ) : (
-                <> if Bitcoin follows the {forwardCAGR}% CAGR trend exactly,</>
-              )}{' '}
-              your BTC grows to{' '}
-              <span className="font-mono" style={{ color: 'var(--accent)' }}>{formatCurrency(monthlyData[MONTHS - 1]?.btcValue || INITIAL_BTC_VALUE)}</span>{' '}
-              while your loan reaches{' '}
-              <span className="font-mono" style={{ color: 'var(--danger)' }}>{formatCurrency(monthlyData[MONTHS - 1]?.loanBalance || INITIAL_LOAN)}</span>.{' '}
+        {/* Results Summary */}
+        <section ref={resultsRef} className="mb-8 scroll-mt-20">
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }}></div>
+              <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Simulation Results
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+              <div className="p-4 rounded-lg" style={{ background: 'var(--bg-tertiary)' }}>
+                <div className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>Final Portfolio</div>
+                <div className="font-mono text-xl font-semibold" style={{ color: 'var(--accent)' }}>
+                  {formatCurrency(monthlyData[MONTHS - 1]?.btcValue || INITIAL_BTC_VALUE)}
+                </div>
+              </div>
+              <div className="p-4 rounded-lg" style={{ background: 'var(--bg-tertiary)' }}>
+                <div className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>Final Loan</div>
+                <div className="font-mono text-xl font-semibold" style={{ color: 'var(--danger)' }}>
+                  {formatCurrency(monthlyData[MONTHS - 1]?.loanBalance || INITIAL_LOAN)}
+                </div>
+              </div>
+              <div className="p-4 rounded-lg" style={{ background: 'var(--bg-tertiary)' }}>
+                <div className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>Peak LVR</div>
+                <div className="font-mono text-xl font-semibold" style={{
+                  color: riskMetrics.peakLVR >= 80 ? 'var(--danger)' : riskMetrics.peakLVR >= 70 ? 'var(--warning)' : 'var(--success)'
+                }}>
+                  {riskMetrics.peakLVR.toFixed(1)}%
+                </div>
+              </div>
+              <div className="p-4 rounded-lg" style={{ background: 'var(--bg-tertiary)' }}>
+                <div className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>Total Spent</div>
+                <div className="font-mono text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {formatCurrency(monthlySpend * MONTHS)}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-lg" style={{
+              background: riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger-subtle)' :
+                         riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning-subtle)' : 'var(--success-subtle)',
+              border: `1px solid ${riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger)' :
+                         riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning)' : 'var(--success)'}40`
+            }}>
               {(() => {
                 const finalLvr = monthlyData[MONTHS - 1]?.lvr || 0;
                 const peakLvr = riskMetrics.peakLVR;
                 if (riskMetrics.yearsWithLiquidationRisk > 0) {
                   return (
-                    <span style={{ color: 'var(--danger)' }}>
-                      Your LVR peaks at {peakLvr.toFixed(0)}% — you would face liquidation.
-                    </span>
+                    <p className="text-sm" style={{ color: 'var(--danger)' }}>
+                      <strong>Risk: Liquidation</strong> — LVR peaks at {peakLvr.toFixed(0)}%, exceeding 80% threshold.
+                    </p>
                   );
                 } else if (riskMetrics.yearsWithMarginCall > 0) {
                   return (
-                    <span style={{ color: 'var(--warning)' }}>
-                      Your LVR peaks at {peakLvr.toFixed(0)}%, triggering margin calls, but ends at {finalLvr.toFixed(0)}%.
-                    </span>
+                    <p className="text-sm" style={{ color: 'var(--warning)' }}>
+                      <strong>Risk: Margin Calls</strong> — LVR peaks at {peakLvr.toFixed(0)}%, ends at {finalLvr.toFixed(0)}%.
+                    </p>
                   );
                 } else {
                   return (
-                    <span style={{ color: 'var(--success)' }}>
-                      Your LVR stays safe, peaking at {peakLvr.toFixed(0)}% and ending at {finalLvr.toFixed(0)}%.
-                    </span>
+                    <p className="text-sm" style={{ color: 'var(--success)' }}>
+                      <strong>Safe</strong> — LVR stays below 70%, peaking at {peakLvr.toFixed(0)}% and ending at {finalLvr.toFixed(0)}%.
+                    </p>
                   );
                 }
               })()}
-            </p>
-            
-            <p className="text-base mt-6" style={{ color: 'var(--text-tertiary)' }}>
-              Total spent: {formatCurrency(monthlySpend * MONTHS)} over {horizonYears} years —
-              funded by {formatCurrency(monthlyData[MONTHS - 1]?.totalDrawn || INITIAL_DRAW)} in loans
-              ({formatCurrency(monthlyData[MONTHS - 1]?.totalFees || INITIAL_FEE)} in fees).
-            </p>
-
-            <button
-              onClick={scrollToParameters}
-              className="mt-8 text-base transition-all hover:opacity-80"
-              style={{ color: 'var(--accent)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-            >
-              Adjust parameters and run again
-            </button>
+            </div>
           </div>
         </section>
 
-        {/* Summary Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+        {/* Detailed Results Cards */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {/* Results */}
-          <div className="p-8 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-              Results
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+            <h3 className="text-xs font-medium uppercase tracking-wider mb-4" style={{ color: 'var(--text-tertiary)' }}>
+              Performance
             </h3>
             <div className="space-y-3">
               <SummaryRow label="Target CAGR" value={`${forwardCAGR}%`} subvalue={formatCurrency(TARGET_FINAL_PRICE)} />
@@ -451,15 +458,12 @@ const BTCBorrowSimulator = () => {
           </div>
 
           {/* Risk */}
-          <div className="p-8 rounded-xl" style={{
+          <div className="p-6 rounded-xl" style={{
             background: 'var(--bg-secondary)',
-            border: `1px solid ${
-              riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger)' :
-              riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning)' : 'var(--border-subtle)'
-            }`,
-            borderLeftWidth: '3px'
+            border: `1px solid ${riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger)' :
+              riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning)' : 'var(--success)'}`
           }}>
-            <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ 
+            <h3 className="text-xs font-medium uppercase tracking-wider mb-4" style={{
               color: riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger)' :
                      riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning)' : 'var(--text-tertiary)'
             }}>
@@ -472,7 +476,7 @@ const BTCBorrowSimulator = () => {
               <SummaryRow label="Margin Call Years" value={`${riskMetrics.yearsWithMarginCall} / ${horizonYears}`} />
               <SummaryRow label="Liquidation Years" value={`${riskMetrics.yearsWithLiquidationRisk} / ${horizonYears}`} />
             </div>
-            <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+            <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-default)' }}>
               {riskMetrics.yearsWithLiquidationRisk > 0 ? (
                 <p className="text-xs" style={{ color: 'var(--danger)' }}>This scenario would trigger liquidation</p>
               ) : riskMetrics.yearsWithMarginCall > 0 ? (
@@ -485,72 +489,86 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* LVR Chart */}
-        <section className="mb-16">
-          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            LVR Over Time
-          </h3>
-          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+        <section className="mb-8">
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--info)' }}></div>
+                <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  LVR Over Time
+                </h3>
+              </div>
+              <div className="flex gap-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-1 rounded" style={{ background: 'var(--warning)' }}></span>
+                  Warning 70-80%
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="w-3 h-1 rounded" style={{ background: 'var(--danger)' }}></span>
+                  Liquidation 80%+
+                </span>
+              </div>
+            </div>
             {(() => {
               const chartMax = Math.max(100, Math.ceil(riskMetrics.peakLVR / 10) * 10 + 10);
               return (
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                    <ReferenceArea y1={70} y2={80} fill="#c9a048" fillOpacity={0.08} />
-                    <ReferenceArea y1={80} y2={chartMax} fill="#b85450" fillOpacity={0.08} />
-                    <XAxis dataKey="month" stroke="#666" tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis stroke="#666" tick={{ fill: '#666', fontSize: 11 }} domain={[0, chartMax]} axisLine={false} tickLine={false} width={40} />
-                    <Tooltip formatter={(value) => formatPercent(value)} contentStyle={tooltipStyle} labelStyle={{ color: '#666' }} />
-                    <ReferenceLine y={70} stroke="#c9a048" strokeDasharray="4 4" strokeOpacity={0.5} />
-                    <ReferenceLine y={80} stroke="#b85450" strokeDasharray="4 4" strokeOpacity={0.5} />
-                    <Line type="monotone" dataKey="lvr" stroke="#6b8db8" strokeWidth={1.5} name="LVR" dot={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
+                    <ReferenceArea y1={70} y2={80} fill="var(--warning)" fillOpacity={0.1} />
+                    <ReferenceArea y1={80} y2={chartMax} fill="var(--danger)" fillOpacity={0.1} />
+                    <XAxis dataKey="month" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} domain={[0, chartMax]} axisLine={false} tickLine={false} width={40} />
+                    <Tooltip formatter={(value) => formatPercent(value)} contentStyle={tooltipStyle} labelStyle={{ color: 'var(--text-tertiary)' }} />
+                    <ReferenceLine y={70} stroke="var(--warning)" strokeDasharray="4 4" strokeOpacity={0.6} />
+                    <ReferenceLine y={80} stroke="var(--danger)" strokeDasharray="4 4" strokeOpacity={0.6} />
+                    <Line type="monotone" dataKey="lvr" stroke="var(--info)" strokeWidth={2} name="LVR" dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               );
             })()}
-            <div className="flex gap-6 mt-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(201, 160, 72, 0.3)' }}></span>
-                Warning 70–80%
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm" style={{ background: 'rgba(184, 84, 80, 0.3)' }}></span>
-                Liquidation 80%+
-              </span>
-            </div>
           </div>
         </section>
 
         {/* Portfolio Chart */}
-        <section className="mb-16">
-          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            Portfolio vs Trend vs Loan
-          </h3>
-          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-            <ResponsiveContainer width="100%" height={360}>
+        <section className="mb-8">
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full" style={{ background: 'var(--accent)' }}></div>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Portfolio vs Loan
+              </h3>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
               <LineChart data={monthlyData.map(d => ({ ...d, trendValue: d.trendPrice * initialBTC }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="month" stroke="#666" tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis 
-                  stroke="#666" tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} width={60}
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
+                <XAxis dataKey="month" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis
+                  stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} width={70}
                   tickFormatter={(value) => value >= 1000000 ? `$${(value / 1000000).toFixed(1)}M` : `$${(value / 1000).toFixed(0)}k`}
                 />
-                <Tooltip formatter={(value) => formatCurrency(value)} labelFormatter={(l) => `Month ${l}`} contentStyle={tooltipStyle} labelStyle={{ color: '#666' }} />
-                <Legend wrapperStyle={{ paddingTop: 20, fontSize: 12 }} />
-                <Line type="monotone" dataKey="trendValue" stroke="#666" strokeWidth={1} strokeDasharray="4 4" name="Trend" dot={false} />
-                <Line type="monotone" dataKey="btcValue" stroke="var(--accent)" strokeWidth={1.5} name="Portfolio" dot={false} />
-                <Line type="monotone" dataKey="loanBalance" stroke="var(--danger)" strokeWidth={1.5} name="Loan" dot={false} />
+                <Tooltip formatter={(value) => formatCurrency(value)} labelFormatter={(l) => `Month ${l}`} contentStyle={tooltipStyle} labelStyle={{ color: 'var(--text-tertiary)' }} />
+                <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
+                <Line type="monotone" dataKey="trendValue" stroke="var(--text-tertiary)" strokeWidth={1} strokeDasharray="4 4" name="Trend" dot={false} />
+                <Line type="monotone" dataKey="btcValue" stroke="var(--success)" strokeWidth={2} name="Portfolio" dot={false} />
+                <Line type="monotone" dataKey="loanBalance" stroke="var(--danger)" strokeWidth={2} name="Loan" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </section>
 
         {/* Yearly Table */}
-        <section className="mb-16">
-          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
-            Yearly Snapshots
-          </h3>
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+        <section className="mb-8">
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Yearly Snapshots
+              </h3>
+            </div>
+            <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-default)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--bg-tertiary)' }}>
@@ -569,10 +587,10 @@ const BTCBorrowSimulator = () => {
                 {yearlySummaries.map((row) => {
                   const status = row.lvr >= 80 ? 'liquidation' : row.lvr >= 70 ? 'margin' : row.lvr >= 50 ? 'caution' : 'safe';
                   return (
-                    <tr key={row.month} style={{ 
-                      background: status === 'liquidation' ? 'rgba(184, 84, 80, 0.06)' : 
-                                  status === 'margin' ? 'rgba(201, 160, 72, 0.06)' : 'transparent',
-                      borderBottom: '1px solid var(--border-subtle)'
+                    <tr key={row.month} style={{
+                      background: status === 'liquidation' ? 'var(--danger-subtle)' :
+                                  status === 'margin' ? 'var(--warning-subtle)' : 'transparent',
+                      borderBottom: '1px solid var(--border-default)'
                     }}>
                       <Td align="left" bold>{row.year}</Td>
                       <Td mono muted>{row.t.toFixed(1)}</Td>
@@ -590,18 +608,19 @@ const BTCBorrowSimulator = () => {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         </section>
 
         {/* Monthly Table Toggle */}
-        <section className="mb-16 text-center">
+        <section className="mb-8 text-center">
           <button
             onClick={() => setShowTable(!showTable)}
-            className="px-6 py-3 text-sm font-medium rounded-lg transition-all"
+            className="px-5 py-2.5 text-sm font-medium rounded-lg transition-all"
             style={{
-              background: 'transparent',
+              background: 'var(--bg-secondary)',
               color: 'var(--text-secondary)',
-              border: '1px solid var(--border-muted)'
+              border: '1px solid var(--border-default)'
             }}
           >
             {showTable ? 'Hide' : 'Show'} Monthly Data
@@ -609,46 +628,48 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {showTable && (
-          <section className="mb-16">
-            <div className="rounded-xl overflow-hidden max-h-96 overflow-y-auto" style={{ border: '1px solid var(--border-subtle)' }}>
-              <table className="w-full text-sm">
-                <thead className="sticky top-0" style={{ background: 'var(--bg-tertiary)' }}>
-                  <tr>
-                    <Th align="left">Mo</Th>
-                    <Th>t</Th>
-                    <Th>Price</Th>
-                    <Th>Trend</Th>
-                    <Th>Dev</Th>
-                    <Th>Loan</Th>
-                    <Th>LVR</Th>
-                    <Th>Draw</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthlyData.map((row) => (
-                    <tr key={row.month} style={{ 
-                      background: row.monthlyDraw > 0 ? 'rgba(90, 154, 110, 0.06)' : 'transparent',
-                      borderBottom: '1px solid var(--border-subtle)'
-                    }}>
+          <section className="mb-8">
+            <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+              <div className="rounded-lg overflow-hidden max-h-96 overflow-y-auto" style={{ border: '1px solid var(--border-default)' }}>
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0" style={{ background: 'var(--bg-tertiary)' }}>
+                    <tr>
+                      <Th align="left">Mo</Th>
+                      <Th>t</Th>
+                      <Th>Price</Th>
+                      <Th>Trend</Th>
+                      <Th>Dev</Th>
+                      <Th>Loan</Th>
+                      <Th>LVR</Th>
+                      <Th>Draw</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyData.map((row) => (
+                      <tr key={row.month} style={{
+                        background: row.monthlyDraw > 0 ? 'var(--success-subtle)' : 'transparent',
+                        borderBottom: '1px solid var(--border-default)'
+                      }}>
                       <Td align="left">{row.month}</Td>
                       <Td mono muted>{row.t.toFixed(2)}</Td>
                       <Td mono>{formatCurrency(row.btcPrice)}</Td>
                       <Td mono muted>{formatCurrency(row.trendPrice)}</Td>
                       <Td mono positive={row.deviationFromTrend >= 0}>{row.deviationFromTrend >= 0 ? '+' : ''}{row.deviationFromTrend.toFixed(1)}%</Td>
-                      <Td mono negative>{formatCurrency(row.loanBalance)}</Td>
-                      <Td mono>{formatPercent(row.lvr)}</Td>
-                      <Td mono>{row.monthlyDraw > 0 ? formatCurrency(row.monthlyDraw) : '—'}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <Td mono negative>{formatCurrency(row.loanBalance)}</Td>
+                        <Td mono>{formatPercent(row.lvr)}</Td>
+                        <Td mono>{row.monthlyDraw > 0 ? formatCurrency(row.monthlyDraw) : '—'}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
         )}
 
         {/* Mathematical Model Documentation - Always Visible */}
-        <section className="mb-16">
-          <div className="p-10 rounded-xl space-y-12" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+        <section className="mb-8">
+          <div className="p-6 rounded-xl space-y-10" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
             
             <div>
               <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Mathematical Model</h2>
@@ -1076,8 +1097,8 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* Footer */}
-        <footer className="pt-12 text-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-          <p className="text-sm font-mono" style={{ color: 'var(--text-tertiary)' }}>
+        <footer className="py-8 text-center" style={{ borderTop: '1px solid var(--border-default)' }}>
+          <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
             P(t) = {priceModel.A.toFixed(2)} · t<sup>{priceModel.k.toFixed(4)}</sup> · exp(Y<sub>t</sub>)
           </p>
         </footer>
@@ -1090,7 +1111,7 @@ const BTCBorrowSimulator = () => {
 // COMPONENTS
 // ============================================================================
 
-const SimulationButton = ({ onClick, buttonState, disabled, primary }) => {
+const SimulationButton = ({ onClick, buttonState, disabled, compact }) => {
   const isRunning = buttonState === 'running';
   const isSuccess = buttonState === 'success';
   const isIdle = buttonState === 'idle';
@@ -1099,40 +1120,34 @@ const SimulationButton = ({ onClick, buttonState, disabled, primary }) => {
     <button
       onClick={onClick}
       disabled={disabled || !isIdle}
-      className={`group relative px-8 py-4 text-base font-medium rounded-lg transition-all flex items-center justify-center gap-3 overflow-hidden ${
+      className={`group relative font-medium rounded-lg transition-all flex items-center justify-center gap-2 overflow-hidden ${
         isSuccess ? 'animate-pulse-once' : ''
-      }`}
+      } ${compact ? 'px-4 py-2 text-sm' : 'px-6 py-3 text-sm'}`}
       style={{
         background: disabled ? 'var(--bg-tertiary)' :
                    isSuccess ? 'var(--success)' : 'var(--accent)',
         color: disabled ? 'var(--text-tertiary)' : 'var(--bg-primary)',
         cursor: disabled ? 'not-allowed' : isIdle ? 'pointer' : 'default',
         opacity: disabled ? 0.5 : 1,
-        minWidth: '200px',
+        minWidth: compact ? '140px' : '180px',
         transform: isSuccess ? 'scale(1.02)' : 'scale(1)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       {/* Idle state */}
       <span
-        className="flex items-center gap-3 transition-all duration-300"
+        className="flex items-center gap-2 transition-all duration-300"
         style={{
           opacity: isIdle ? 1 : 0,
           transform: isIdle ? 'translateY(0)' : 'translateY(-20px)',
           position: isIdle ? 'relative' : 'absolute',
         }}
       >
-        <span>Run Simulation</span>
-        {primary && (
-          <svg
-            className="w-5 h-5 transition-transform group-hover:translate-x-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        )}
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>{compact ? 'Run' : 'Run Simulation'}</span>
       </span>
 
       {/* Running state - spinner */}
@@ -1144,7 +1159,7 @@ const SimulationButton = ({ onClick, buttonState, disabled, primary }) => {
           position: isRunning ? 'relative' : 'absolute',
         }}
       >
-        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
@@ -1160,7 +1175,7 @@ const SimulationButton = ({ onClick, buttonState, disabled, primary }) => {
           position: isSuccess ? 'relative' : 'absolute',
         }}
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
         </svg>
         <span>Done!</span>
@@ -1169,30 +1184,37 @@ const SimulationButton = ({ onClick, buttonState, disabled, primary }) => {
   );
 };
 
+const MetricCard = ({ label, value, color }) => (
+  <div className="p-4 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-default)' }}>
+    <div className="text-xs mb-2 font-medium" style={{ color: 'var(--text-tertiary)' }}>{label}</div>
+    <div className="font-mono text-xl font-semibold" style={{ color }}>{value}</div>
+  </div>
+);
+
 const InputField = ({ label, value, onChange, prefix, suffix, ...props }) => (
   <div className="flex flex-col">
-    <label className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>{label}</label>
+    <label className="text-xs mb-2 font-medium" style={{ color: 'var(--text-tertiary)' }}>{label}</label>
     <div className="relative">
       {prefix && (
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--text-tertiary)' }}>{prefix}</span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--text-tertiary)' }}>{prefix}</span>
       )}
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         onFocus={(e) => e.target.select()}
-        className="w-full px-3 py-3 text-sm rounded-lg font-mono transition-all"
+        className="w-full px-3 py-2.5 text-sm rounded-lg font-mono transition-all"
         style={{
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-subtle)',
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border-default)',
           color: 'var(--text-primary)',
-          paddingLeft: prefix ? '1.75rem' : '0.75rem',
-          paddingRight: suffix ? '2.75rem' : '0.75rem'
+          paddingLeft: prefix ? '1.5rem' : '0.75rem',
+          paddingRight: suffix ? '2.5rem' : '0.75rem'
         }}
         {...props}
       />
       {suffix && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--text-tertiary)' }}>{suffix}</span>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--text-tertiary)' }}>{suffix}</span>
       )}
     </div>
   </div>
@@ -1201,7 +1223,7 @@ const InputField = ({ label, value, onChange, prefix, suffix, ...props }) => (
 const DerivedValue = ({ label, value, highlight }) => (
   <div>
     <div className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</div>
-    <div className="font-mono text-sm" style={{ color: highlight ? 'var(--accent)' : 'var(--text-primary)' }}>{value}</div>
+    <div className="font-mono text-sm font-medium" style={{ color: highlight ? 'var(--accent)' : 'var(--text-primary)' }}>{value}</div>
   </div>
 );
 
@@ -1244,14 +1266,14 @@ const Td = ({ children, align = 'right', mono, muted, bold, positive, negative, 
 
 const StatusBadge = ({ status }) => {
   const styles = {
-    liquidation: { bg: 'rgba(184, 84, 80, 0.15)', color: 'var(--danger)', text: 'LIQUIDATION' },
-    margin: { bg: 'rgba(201, 160, 72, 0.15)', color: 'var(--warning)', text: 'Margin Call' },
-    caution: { bg: 'rgba(201, 160, 72, 0.1)', color: 'var(--warning)', text: 'Caution' },
-    safe: { bg: 'rgba(90, 154, 110, 0.1)', color: 'var(--success)', text: 'Safe' }
+    liquidation: { bg: 'var(--danger-subtle)', color: 'var(--danger)', text: 'LIQUIDATION' },
+    margin: { bg: 'var(--warning-subtle)', color: 'var(--warning)', text: 'Margin Call' },
+    caution: { bg: 'var(--warning-subtle)', color: 'var(--warning)', text: 'Caution' },
+    safe: { bg: 'var(--success-subtle)', color: 'var(--success)', text: 'Safe' }
   };
   const s = styles[status];
   return (
-    <span className="px-2 py-1 text-xs rounded" style={{ background: s.bg, color: s.color }}>
+    <span className="px-2 py-1 text-xs font-medium rounded" style={{ background: s.bg, color: s.color }}>
       {s.text}
     </span>
   );

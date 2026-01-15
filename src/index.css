@@ -1,32 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Core palette - sophisticated dark */
-  --bg-primary: #0c0c0c;
-  --bg-secondary: #141414;
-  --bg-tertiary: #1a1a1a;
-  --bg-elevated: #202020;
-  
+  /* Core palette - dark mode inspired by STRC.live */
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --bg-elevated: #21262d;
+
   /* Text hierarchy */
-  --text-primary: #f0f0f0;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #666666;
-  
-  /* Accent - warm brass/gold */
-  --accent: #c9a962;
-  --accent-muted: #9a7b3c;
-  --accent-subtle: rgba(201, 169, 98, 0.1);
-  
-  /* Status colors - muted */
-  --success: #5a9a6e;
-  --warning: #c9a048;
-  --danger: #b85450;
-  --info: #6b8db8;
-  
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-tertiary: #6e7681;
+
+  /* Accent - Bitcoin orange */
+  --accent: #f7931a;
+  --accent-hover: #ffa940;
+  --accent-subtle: rgba(247, 147, 26, 0.1);
+  --accent-border: rgba(247, 147, 26, 0.3);
+
+  /* Status colors */
+  --success: #3fb950;
+  --success-subtle: rgba(63, 185, 80, 0.15);
+  --warning: #d29922;
+  --warning-subtle: rgba(210, 153, 34, 0.15);
+  --danger: #f85149;
+  --danger-subtle: rgba(248, 81, 73, 0.15);
+  --info: #58a6ff;
+
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-muted: rgba(255, 255, 255, 0.1);
+  --border-default: #30363d;
+  --border-muted: #21262d;
+  --border-subtle: rgba(240, 246, 252, 0.1);
 }
 
 * {
@@ -34,17 +39,19 @@
 }
 
 html {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 body {
   margin: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.7;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
+  font-size: 14px;
 }
 
 /* Monospace for numbers/data */
@@ -76,6 +83,7 @@ body {
 input:focus {
   outline: none;
   border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-subtle);
 }
 
 /* Table row hover */
@@ -83,9 +91,27 @@ tbody tr {
   transition: background 0.15s ease;
 }
 
+tbody tr:hover {
+  background: var(--bg-tertiary) !important;
+}
+
 /* Subtle animations */
 button {
   transition: all 0.2s ease;
+}
+
+/* Card styling */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+}
+
+/* Metric card styling */
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 /* Chart tooltip override */
@@ -96,10 +122,10 @@ button {
 /* Button success animation */
 @keyframes pulse-once {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(90, 154, 110, 0);
+    box-shadow: 0 0 0 0 rgba(63, 185, 80, 0);
   }
   50% {
-    box-shadow: 0 0 0 12px rgba(90, 154, 110, 0.3);
+    box-shadow: 0 0 0 12px rgba(63, 185, 80, 0.3);
   }
 }
 
