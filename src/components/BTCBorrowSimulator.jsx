@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, ReferenceArea } from 'recharts';
 
 // ============================================================================
@@ -141,6 +141,7 @@ const BTCBorrowSimulator = () => {
   }, [initialBTC, btcPriceUSD, t0Years, horizonYears, initialLVR, monthlySpend, annualInterest, originationFee, forwardCAGR, annualVolatility, meanReversionSpeed, randomSeed, priceModel]);
   
   const [showTable, setShowTable] = useState(false);
+  const [buttonState, setButtonState] = useState('idle'); // 'idle' | 'running' | 'success'
   
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
@@ -181,19 +182,35 @@ const BTCBorrowSimulator = () => {
     return (Math.pow(finalPrice / btcPriceUSD, 1 / horizonYears) - 1) * 100;
   }, [monthlyData, btcPriceUSD, horizonYears, MONTHS]);
 
-  const randomizeScenario = () => setRandomSeed(Math.floor(Math.random() * 10000));
-  
   const resultsRef = React.useRef(null);
   const parametersRef = React.useRef(null);
-  
-  const runSimulation = () => {
-    randomizeScenario();
+
+  const triggerButtonFeedback = useCallback(() => {
+    setButtonState('running');
+    setTimeout(() => {
+      setButtonState('success');
+      setTimeout(() => {
+        setButtonState('idle');
+      }, 1200);
+    }, 300);
+  }, []);
+
+  const randomizeScenario = useCallback(() => {
+    if (buttonState !== 'idle') return;
+    setRandomSeed(Math.floor(Math.random() * 10000));
+    triggerButtonFeedback();
+  }, [buttonState, triggerButtonFeedback]);
+
+  const runSimulation = useCallback(() => {
+    if (buttonState !== 'idle') return;
+    setRandomSeed(Math.floor(Math.random() * 10000));
+    triggerButtonFeedback();
     // Scroll to results after a brief delay to let the state update
     setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  };
-  
+    }, 150);
+  }, [buttonState, triggerButtonFeedback]);
+
   const scrollToParameters = () => {
     parametersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -209,77 +226,66 @@ const BTCBorrowSimulator = () => {
 
   return (
     <div className="w-full min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-8 py-16 lg:px-12">
         
         {/* Header */}
-        <header className="mb-20">
-          <h1 className="text-4xl font-semibold tracking-tight mb-6 text-center" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+        <header className="mb-24">
+          <h1 className="text-5xl font-semibold tracking-tight mb-10 text-center" style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
             Buy-Borrow-Die
           </h1>
-          
-          <div className="max-w-3xl space-y-5" style={{ color: 'var(--text-secondary)' }}>
-            <p className="text-lg leading-relaxed" style={{ fontWeight: 300 }}>
-              The <em style={{ color: 'var(--text-primary)', fontStyle: 'normal' }}>buy-borrow-die</em> strategy 
-              is a wealth preservation technique: instead of selling appreciated assets and triggering capital gains taxes, 
-              you borrow against them to fund your lifestyle. The loan proceeds aren't taxable income. 
+
+          <div className="space-y-6" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xl leading-relaxed" style={{ fontWeight: 300, letterSpacing: '-0.01em' }}>
+              The <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>buy-borrow-die</span> strategy
+              is a wealth preservation technique: instead of selling appreciated assets and triggering capital gains taxes,
+              you borrow against them to fund your lifestyle. The loan proceeds aren't taxable income.
               When you die, your heirs receive a stepped-up cost basis, potentially eliminating the deferred gains entirely.
             </p>
-            
+
             {/* Primary CTA - visible immediately */}
-            <div className="py-6 flex flex-col items-center">
-              <button
+            <div className="py-8 flex flex-col items-center">
+              <SimulationButton
                 onClick={runSimulation}
-                className="group px-6 py-3 text-sm font-medium rounded-lg transition-all flex items-center gap-3"
-                style={{
-                  background: 'var(--accent)',
-                  color: 'var(--bg-primary)',
-                }}
-              >
-                <span>Run Simulation</span>
-                <svg 
-                  className="w-4 h-4 transition-transform group-hover:translate-x-1" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
+                buttonState={buttonState}
+                disabled={annualVolatility === 0}
+                primary
+              />
               <button
                 onClick={scrollToParameters}
-                className="text-xs mt-3 transition-all hover:opacity-80"
+                className="text-sm mt-4 transition-all hover:opacity-80"
                 style={{ color: 'var(--text-tertiary)', background: 'transparent', border: 'none', cursor: 'pointer' }}
               >
                 Change parameters
               </button>
             </div>
-            
-            <p className="leading-relaxed" style={{ fontWeight: 300 }}>
-              This simulator models the strategy applied to Bitcoin. You hold BTC, borrow against it at a given 
-              loan-to-value ratio, and spend the proceeds over time. As Bitcoin's price evolves, so does your 
-              LVR — the critical metric that determines whether you face margin calls or liquidation.
-            </p>
-            
-            <p className="leading-relaxed" style={{ fontWeight: 300 }}>
-              The price model uses a <em style={{ color: 'var(--text-primary)', fontStyle: 'normal' }}>power-law trend</em> with 
-              <em style={{ color: 'var(--text-primary)', fontStyle: 'normal' }}> mean-reverting stochastic volatility</em>. 
-              This captures Bitcoin's historical pattern: long-term growth following a decaying power-law, 
-              with substantial but bounded deviations that always revert toward the trend. The model is calibrated 
-              to your forward CAGR expectations, not fitted to past data.
-            </p>
+
+            <div className="grid md:grid-cols-2 gap-8 pt-4">
+              <p className="leading-relaxed text-base" style={{ fontWeight: 300 }}>
+                This simulator models the strategy applied to Bitcoin. You hold BTC, borrow against it at a given
+                loan-to-value ratio, and spend the proceeds over time. As Bitcoin's price evolves, so does your
+                LVR — the critical metric that determines whether you face margin calls or liquidation.
+              </p>
+
+              <p className="leading-relaxed text-base" style={{ fontWeight: 300 }}>
+                The price model uses a <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>power-law trend</span> with{' '}
+                <span style={{ color: 'var(--text-primary)', fontWeight: 400 }}>mean-reverting stochastic volatility</span>.
+                This captures Bitcoin's historical pattern: long-term growth following a decaying power-law,
+                with substantial but bounded deviations that always revert toward the trend.
+              </p>
+            </div>
           </div>
         </header>
 
         {/* Parameters Section */}
-        <section ref={parametersRef} className="mb-16 scroll-mt-8">
-          <h2 className="text-2xl font-semibold tracking-tight mb-8" style={{ color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+        <section ref={parametersRef} className="mb-20 scroll-mt-8">
+          <h2 className="text-3xl font-semibold tracking-tight mb-10" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             Parameters
           </h2>
           
-          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
             Price Model
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
             <InputField
               label="BTC Price"
               value={btcPriceUSD}
@@ -289,8 +295,8 @@ const BTCBorrowSimulator = () => {
             />
             <div className="flex flex-col">
               <label className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>Time (t₀)</label>
-              <div className="px-3 py-2.5 font-mono text-sm rounded" style={{ 
-                background: 'var(--bg-secondary)', 
+              <div className="px-3 py-3 font-mono text-sm rounded-lg" style={{
+                background: 'var(--bg-secondary)',
                 color: 'var(--text-secondary)',
                 border: '1px solid var(--border-subtle)'
               }}>
@@ -327,8 +333,8 @@ const BTCBorrowSimulator = () => {
           </div>
 
           {/* Derived Parameters */}
-          <div className="my-8 p-5 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <div className="my-10 p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
               <DerivedValue label="Exponent (k)" value={formatNumber(priceModel.k, 4)} />
               <DerivedValue label="Scale (A)" value={formatNumber(priceModel.A, 2)} />
               <DerivedValue label={`Target Yr ${horizonYears}`} value={formatCurrency(TARGET_FINAL_PRICE)} highlight />
@@ -338,10 +344,10 @@ const BTCBorrowSimulator = () => {
             </div>
           </div>
 
-          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
             Loan Parameters
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
             <InputField label="BTC Holdings" value={initialBTC} onChange={setInitialBTC} suffix="₿" min={0.1} max={100} step={0.1} />
             <InputField label="Initial LVR" value={initialLVR} onChange={setInitialLVR} suffix="%" min={1} max={40} step={1} />
             <InputField label="Monthly Spend" value={monthlySpend} onChange={setMonthlySpend} prefix="$" min={500} max={50000} step={500} />
@@ -350,30 +356,22 @@ const BTCBorrowSimulator = () => {
           </div>
           
           {/* Action */}
-          <div className="mt-10 flex flex-col items-center gap-2">
-          <button
-            onClick={randomizeScenario}
-            disabled={annualVolatility === 0}
-            className="px-5 py-2.5 text-sm font-medium rounded transition-all"
-            style={{
-              background: annualVolatility === 0 ? 'var(--bg-tertiary)' : 'var(--accent)',
-              color: annualVolatility === 0 ? 'var(--text-tertiary)' : 'var(--bg-primary)',
-              cursor: annualVolatility === 0 ? 'not-allowed' : 'pointer',
-              opacity: annualVolatility === 0 ? 0.5 : 1
-            }}
-          >
-            Run Simulation
-          </button>
-          <span className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
-            {annualVolatility === 0 ? 'Set σ > 0 for stochastic mode' : `Seed: ${randomSeed}`}
-          </span>
+          <div className="mt-12 flex flex-col items-center gap-3">
+            <SimulationButton
+              onClick={randomizeScenario}
+              buttonState={buttonState}
+              disabled={annualVolatility === 0}
+            />
+            <span className="text-sm font-mono" style={{ color: 'var(--text-tertiary)' }}>
+              {annualVolatility === 0 ? 'Set σ > 0 for stochastic mode' : `Seed: ${randomSeed}`}
+            </span>
           </div>
         </section>
 
         {/* Narrative Summary */}
-        <section ref={resultsRef} className="mb-12 scroll-mt-8">
-          <div className="max-w-3xl mx-auto text-center">
-            <p className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
+        <section ref={resultsRef} className="mb-16 scroll-mt-8">
+          <div className="max-w-5xl mx-auto text-center">
+            <p className="text-xl leading-relaxed" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
               You start with <span style={{ color: 'var(--text-primary)' }}>{initialBTC} BTC</span> worth{' '}
               <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(INITIAL_BTC_VALUE)}</span> at today's price.{' '}
               You borrow <span className="font-mono" style={{ color: 'var(--text-primary)' }}>{formatCurrency(INITIAL_DRAW)}</span> against it 
@@ -382,7 +380,7 @@ const BTCBorrowSimulator = () => {
               drawing additional loans annually as needed at {annualInterest}% interest.
             </p>
             
-            <p className="text-lg leading-relaxed mt-4" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
+            <p className="text-xl leading-relaxed mt-6" style={{ color: 'var(--text-secondary)', fontWeight: 300 }}>
               Over <span style={{ color: 'var(--text-primary)' }}>{horizonYears} years</span>, 
               {annualVolatility > 0 ? (
                 <> if Bitcoin follows this random path with {forwardCAGR}% expected CAGR and {annualVolatility}% volatility,</>
@@ -418,27 +416,27 @@ const BTCBorrowSimulator = () => {
               })()}
             </p>
             
-            <p className="text-sm mt-4" style={{ color: 'var(--text-tertiary)' }}>
-              Total spent: {formatCurrency(monthlySpend * MONTHS)} over {horizonYears} years — 
-              funded by {formatCurrency(monthlyData[MONTHS - 1]?.totalDrawn || INITIAL_DRAW)} in loans 
+            <p className="text-base mt-6" style={{ color: 'var(--text-tertiary)' }}>
+              Total spent: {formatCurrency(monthlySpend * MONTHS)} over {horizonYears} years —
+              funded by {formatCurrency(monthlyData[MONTHS - 1]?.totalDrawn || INITIAL_DRAW)} in loans
               ({formatCurrency(monthlyData[MONTHS - 1]?.totalFees || INITIAL_FEE)} in fees).
             </p>
-            
+
             <button
               onClick={scrollToParameters}
-              className="mt-6 text-sm transition-all hover:opacity-80"
+              className="mt-8 text-base transition-all hover:opacity-80"
               style={{ color: 'var(--accent)', background: 'transparent', border: 'none', cursor: 'pointer' }}
             >
-              ↑ Adjust parameters and run again
+              Adjust parameters and run again
             </button>
           </div>
         </section>
 
         {/* Summary Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {/* Results */}
-          <div className="p-6 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-            <h3 className="text-xs font-medium uppercase tracking-widest mb-5" style={{ color: 'var(--text-tertiary)' }}>
+          <div className="p-8 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+            <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
               Results
             </h3>
             <div className="space-y-3">
@@ -453,15 +451,15 @@ const BTCBorrowSimulator = () => {
           </div>
 
           {/* Risk */}
-          <div className="p-6 rounded-lg" style={{ 
-            background: 'var(--bg-secondary)', 
+          <div className="p-8 rounded-xl" style={{
+            background: 'var(--bg-secondary)',
             border: `1px solid ${
               riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger)' :
               riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning)' : 'var(--border-subtle)'
             }`,
             borderLeftWidth: '3px'
           }}>
-            <h3 className="text-xs font-medium uppercase tracking-widest mb-5" style={{ 
+            <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ 
               color: riskMetrics.yearsWithLiquidationRisk > 0 ? 'var(--danger)' :
                      riskMetrics.yearsWithMarginCall > 0 ? 'var(--warning)' : 'var(--text-tertiary)'
             }}>
@@ -487,15 +485,15 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* LVR Chart */}
-        <section className="mb-12">
-          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+        <section className="mb-16">
+          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
             LVR Over Time
           </h3>
-          <div className="p-5 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
             {(() => {
               const chartMax = Math.max(100, Math.ceil(riskMetrics.peakLVR / 10) * 10 + 10);
               return (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={320}>
                   <LineChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                     <ReferenceArea y1={70} y2={80} fill="#c9a048" fillOpacity={0.08} />
@@ -524,12 +522,12 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* Portfolio Chart */}
-        <section className="mb-12">
-          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+        <section className="mb-16">
+          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
             Portfolio vs Trend vs Loan
           </h3>
-          <div className="p-5 rounded-lg" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
-            <ResponsiveContainer width="100%" height={320}>
+          <div className="p-6 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+            <ResponsiveContainer width="100%" height={360}>
               <LineChart data={monthlyData.map(d => ({ ...d, trendValue: d.trendPrice * initialBTC }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                 <XAxis dataKey="month" stroke="#666" tick={{ fill: '#666', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -548,11 +546,11 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* Yearly Table */}
-        <section className="mb-12">
-          <h3 className="text-xs font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
+        <section className="mb-16">
+          <h3 className="text-sm font-medium uppercase tracking-widest mb-6" style={{ color: 'var(--text-tertiary)' }}>
             Yearly Snapshots
           </h3>
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'var(--bg-tertiary)' }}>
@@ -596,12 +594,12 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* Monthly Table Toggle */}
-        <section className="mb-12 text-center">
+        <section className="mb-16 text-center">
           <button
             onClick={() => setShowTable(!showTable)}
-            className="px-5 py-2.5 text-sm rounded transition-all"
-            style={{ 
-              background: 'transparent', 
+            className="px-6 py-3 text-sm font-medium rounded-lg transition-all"
+            style={{
+              background: 'transparent',
               color: 'var(--text-secondary)',
               border: '1px solid var(--border-muted)'
             }}
@@ -611,8 +609,8 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {showTable && (
-          <section className="mb-12">
-            <div className="rounded-lg overflow-hidden max-h-96 overflow-y-auto" style={{ border: '1px solid var(--border-subtle)' }}>
+          <section className="mb-16">
+            <div className="rounded-xl overflow-hidden max-h-96 overflow-y-auto" style={{ border: '1px solid var(--border-subtle)' }}>
               <table className="w-full text-sm">
                 <thead className="sticky top-0" style={{ background: 'var(--bg-tertiary)' }}>
                   <tr>
@@ -649,8 +647,8 @@ const BTCBorrowSimulator = () => {
         )}
 
         {/* Mathematical Model Documentation - Always Visible */}
-        <section className="mb-12">
-          <div className="p-8 rounded-lg space-y-10" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
+        <section className="mb-16">
+          <div className="p-10 rounded-xl space-y-12" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}>
             
             <div>
               <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Mathematical Model</h2>
@@ -1078,8 +1076,8 @@ const BTCBorrowSimulator = () => {
         </section>
 
         {/* Footer */}
-        <footer className="pt-8 text-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-          <p className="text-xs font-mono" style={{ color: 'var(--text-tertiary)' }}>
+        <footer className="pt-12 text-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <p className="text-sm font-mono" style={{ color: 'var(--text-tertiary)' }}>
             P(t) = {priceModel.A.toFixed(2)} · t<sup>{priceModel.k.toFixed(4)}</sup> · exp(Y<sub>t</sub>)
           </p>
         </footer>
@@ -1092,30 +1090,109 @@ const BTCBorrowSimulator = () => {
 // COMPONENTS
 // ============================================================================
 
+const SimulationButton = ({ onClick, buttonState, disabled, primary }) => {
+  const isRunning = buttonState === 'running';
+  const isSuccess = buttonState === 'success';
+  const isIdle = buttonState === 'idle';
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || !isIdle}
+      className={`group relative px-8 py-4 text-base font-medium rounded-lg transition-all flex items-center justify-center gap-3 overflow-hidden ${
+        isSuccess ? 'animate-pulse-once' : ''
+      }`}
+      style={{
+        background: disabled ? 'var(--bg-tertiary)' :
+                   isSuccess ? 'var(--success)' : 'var(--accent)',
+        color: disabled ? 'var(--text-tertiary)' : 'var(--bg-primary)',
+        cursor: disabled ? 'not-allowed' : isIdle ? 'pointer' : 'default',
+        opacity: disabled ? 0.5 : 1,
+        minWidth: '200px',
+        transform: isSuccess ? 'scale(1.02)' : 'scale(1)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      {/* Idle state */}
+      <span
+        className="flex items-center gap-3 transition-all duration-300"
+        style={{
+          opacity: isIdle ? 1 : 0,
+          transform: isIdle ? 'translateY(0)' : 'translateY(-20px)',
+          position: isIdle ? 'relative' : 'absolute',
+        }}
+      >
+        <span>Run Simulation</span>
+        {primary && (
+          <svg
+            className="w-5 h-5 transition-transform group-hover:translate-x-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        )}
+      </span>
+
+      {/* Running state - spinner */}
+      <span
+        className="flex items-center gap-2 transition-all duration-300"
+        style={{
+          opacity: isRunning ? 1 : 0,
+          transform: isRunning ? 'translateY(0)' : (isSuccess ? 'translateY(-20px)' : 'translateY(20px)'),
+          position: isRunning ? 'relative' : 'absolute',
+        }}
+      >
+        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+        <span>Running...</span>
+      </span>
+
+      {/* Success state - checkmark */}
+      <span
+        className="flex items-center gap-2 transition-all duration-300"
+        style={{
+          opacity: isSuccess ? 1 : 0,
+          transform: isSuccess ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.8)',
+          position: isSuccess ? 'relative' : 'absolute',
+        }}
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+        </svg>
+        <span>Done!</span>
+      </span>
+    </button>
+  );
+};
+
 const InputField = ({ label, value, onChange, prefix, suffix, ...props }) => (
   <div className="flex flex-col">
     <label className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>{label}</label>
     <div className="relative">
       {prefix && (
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--text-tertiary)' }}>{prefix}</span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--text-tertiary)' }}>{prefix}</span>
       )}
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         onFocus={(e) => e.target.select()}
-        className="w-full px-3 py-2.5 text-sm rounded font-mono transition-all"
-        style={{ 
-          background: 'var(--bg-secondary)', 
+        className="w-full px-3 py-3 text-sm rounded-lg font-mono transition-all"
+        style={{
+          background: 'var(--bg-secondary)',
           border: '1px solid var(--border-subtle)',
           color: 'var(--text-primary)',
           paddingLeft: prefix ? '1.75rem' : '0.75rem',
-          paddingRight: suffix ? '2.5rem' : '0.75rem'
+          paddingRight: suffix ? '2.75rem' : '0.75rem'
         }}
         {...props}
       />
       {suffix && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--text-tertiary)' }}>{suffix}</span>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: 'var(--text-tertiary)' }}>{suffix}</span>
       )}
     </div>
   </div>
